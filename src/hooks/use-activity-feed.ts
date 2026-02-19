@@ -29,7 +29,7 @@ export interface ActivityItem {
   };
 }
 
-export function useActivityFeed(userId: string | undefined) {
+export function useActivityFeed(userId: string | undefined, mode: 'all' | 'following' = 'all') {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,19 +44,21 @@ export function useActivityFeed(userId: string | undefined) {
     setLoading(true);
 
     try {
-      // Get who this user follows
-      const { data: follows, error: followsError } = await supabase
-        .from('follows')
-        .select('following_id')
-        .eq('follower_id', userId)
-        .returns<{ following_id: string }[]>();
+      let allUserIds: string[] | null = null; // null = fetch from everyone
 
-      if (followsError) throw followsError;
+      if (mode === 'following') {
+        // Get who this user follows
+        const { data: follows, error: followsError } = await supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', userId)
+          .returns<{ following_id: string }[]>();
 
-      const followingIds = follows?.map(f => f.following_id) || [];
+        if (followsError) throw followsError;
 
-      // Include the user's own activity in the feed
-      const allUserIds = [...followingIds, userId];
+        const followingIds = follows?.map(f => f.following_id) || [];
+        allUserIds = [...followingIds, userId];
+      }
 
       // Fetch rankings data
       interface RatingRow {
@@ -68,13 +70,17 @@ export function useActivityFeed(userId: string | undefined) {
         created_at: string;
         updated_at: string;
       }
-      const { data: ratingsData, error: rankingsError } = await supabase
+      let ratingsQuery = supabase
         .from('stadium_ratings')
         .select('id, user_id, stadium_id, initial_tier, elo_rating, created_at, updated_at')
-        .in('user_id', allUserIds)
         .order('updated_at', { ascending: false })
-        .limit(20)
-        .returns<RatingRow[]>();
+        .limit(30);
+
+      if (allUserIds) {
+        ratingsQuery = ratingsQuery.in('user_id', allUserIds);
+      }
+
+      const { data: ratingsData, error: rankingsError } = await ratingsQuery.returns<RatingRow[]>();
 
       if (rankingsError) {
         console.error('Rankings query error:', rankingsError);
@@ -180,7 +186,7 @@ export function useActivityFeed(userId: string | undefined) {
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, mode]);
 
   useEffect(() => {
     fetchFeed();

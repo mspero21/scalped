@@ -1,6 +1,7 @@
 'use client';
 
-import { Users, Construction, UserPlus, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { Users, UserPlus, Loader2 } from 'lucide-react';
 import { PageContainer } from '@/components/layout/page-container';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,23 +10,14 @@ import { useActivityFeed } from '@/hooks/use-activity-feed';
 import { ActivityItemComponent } from '@/components/feed/activity-item';
 import { UserSearch } from '@/components/feed/user-search';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
+
+type FeedTab = 'all' | 'following';
 
 export default function FeedPage() {
+  const [tab, setTab] = useState<FeedTab>('all');
   const { user } = useAuth();
-  const { activities, loading, error } = useActivityFeed(user?.id);
-
-  // Loading state
-  if (loading) {
-    return (
-      <PageContainer>
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-[var(--foreground-muted)]" />
-          </div>
-        </div>
-      </PageContainer>
-    );
-  }
+  const { activities, loading, error } = useActivityFeed(user?.id, tab);
 
   // Not logged in
   if (!user) {
@@ -85,88 +77,65 @@ export default function FeedPage() {
     );
   }
 
-  // Empty state - not following anyone
-  if (activities.length === 0) {
-    return (
-      <PageContainer>
-        <div className="max-w-2xl mx-auto">
-          {/* Search Bar */}
-          <div className="mb-8">
-            <UserSearch currentUserId={user?.id} />
-          </div>
-
-          {/* Empty State */}
-          <div className="text-center py-16">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-purple-100 rounded-full mb-6">
-              <UserPlus className="h-10 w-10 text-purple-600" />
-            </div>
-
-            <h1 className="text-3xl font-bold text-[var(--foreground)] mb-4">
-              Your Feed is Empty
-            </h1>
-
-            <p className="text-lg text-[var(--foreground-muted)] mb-8">
-              Search for users above or follow people to see their stadium activity here.
-            </p>
-
-            <Card className="mb-8 max-w-md mx-auto">
-              <CardContent className="py-8">
-                <UserPlus className="h-12 w-12 text-purple-500 mx-auto mb-4" />
-                <h2 className="text-lg font-semibold text-[var(--foreground)] mb-2">
-                  Start Following
-                </h2>
-                <p className="text-sm text-[var(--foreground-muted)]">
-                  Search for users by username and follow them to see their rankings and stadium visits.
-                </p>
-              </CardContent>
-            </Card>
-
-            <div className="flex gap-4 justify-center">
-              <Link href="/stadiums">
-                <Button>Explore Stadiums</Button>
-              </Link>
-              <Link href="/rankings">
-                <Button variant="outline">My Rankings</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </PageContainer>
-    );
-  }
+  // Remove the old empty state gate — the main view now handles empty state with tabs
 
   // Feed with activities
   return (
     <PageContainer>
       <div className="max-w-2xl mx-auto">
         {/* Search Bar */}
-        <div className="mb-6">
+        <div className="mb-4">
           <UserSearch currentUserId={user?.id} />
         </div>
 
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-[var(--foreground)] mb-2">
-            Friends Feed
-          </h1>
-          <p className="text-sm text-[var(--foreground-muted)]">
-            Recent activity from people you follow
-          </p>
+        {/* Tabs */}
+        <div className="flex gap-1 mb-6 bg-[var(--card-bg-secondary)] p-1 rounded-xl">
+          <button
+            onClick={() => setTab('all')}
+            className={cn(
+              'flex-1 py-2.5 text-sm font-medium rounded-lg transition-all',
+              tab === 'all'
+                ? 'bg-[var(--card-bg)] text-[var(--foreground)] shadow-sm'
+                : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
+            )}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setTab('following')}
+            className={cn(
+              'flex-1 py-2.5 text-sm font-medium rounded-lg transition-all',
+              tab === 'following'
+                ? 'bg-[var(--card-bg)] text-[var(--foreground)] shadow-sm'
+                : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
+            )}
+          >
+            Following
+          </button>
         </div>
 
         {/* Activities List */}
-        <div className="space-y-4">
-          {activities.map((activity) => (
-            <ActivityItemComponent key={activity.id} activity={activity} />
-          ))}
-        </div>
-
-        {/* End message */}
-        {activities.length > 0 && (
-          <div className="text-center py-8">
-            <p className="text-sm text-[var(--foreground-muted)]">
-              You&apos;re all caught up! 🎉
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-[var(--foreground-muted)]" />
+          </div>
+        ) : activities.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-[var(--foreground-muted)]">
+              {tab === 'following' ? 'No activity from people you follow yet.' : 'No activity yet.'}
             </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {activities.map((activity) => (
+              <ActivityItemComponent key={activity.id} activity={activity} />
+            ))}
+
+            <div className="text-center py-8">
+              <p className="text-sm text-[var(--foreground-muted)]">
+                You&apos;re all caught up!
+              </p>
+            </div>
           </div>
         )}
       </div>
