@@ -59,36 +59,42 @@ export function Navbar() {
 
       {/* Mobile Bottom Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50">
-        <div className="absolute inset-0 bg-[var(--nav-bg)] backdrop-blur-xl border-t border-[var(--nav-border)]" />
-        <div className="relative flex items-end justify-around px-2 pt-2 pb-safe">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href ||
-              (item.href !== '/' && pathname.startsWith(item.href));
+        <div className="bg-[var(--nav-bg)] backdrop-blur-xl border-t border-[var(--nav-border)]">
+          <div className="flex items-end justify-around px-2 pt-2 pb-2">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href ||
+                (item.href !== '/' && pathname.startsWith(item.href));
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex flex-col items-center gap-0.5 px-3 pt-2 pb-2 rounded-xl text-[10px] font-medium transition-all duration-200 relative min-w-[56px]',
-                  isActive
-                    ? 'text-[var(--nav-text-active)]'
-                    : 'text-[var(--nav-text)]'
-                )}
-              >
-                {isActive && (
-                  <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[var(--nav-text-active)]" />
-                )}
-                <item.icon className={cn(
-                  'h-5 w-5 transition-transform duration-200',
-                  isActive && 'stroke-[2.5] scale-110'
-                )} />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'flex flex-col items-center gap-0.5 px-3 pt-2 pb-2 rounded-xl text-[10px] font-medium transition-all duration-200 relative min-w-[56px]',
+                    isActive
+                      ? 'text-[var(--nav-text-active)]'
+                      : 'text-[var(--nav-text)]'
+                  )}
+                >
+                  {isActive && (
+                    <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[var(--nav-text-active)]" />
+                  )}
+                  <item.icon className={cn(
+                    'h-5 w-5 transition-transform duration-200',
+                    isActive && 'stroke-[2.5] scale-110'
+                  )} />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+          {/* Safe area spacer for devices with home indicator */}
+          <div style={{ height: 'env(safe-area-inset-bottom, 0px)' }} />
         </div>
       </nav>
+
+      {/* Spacer so page content doesn't get hidden behind the mobile nav */}
+      <div className="md:hidden h-20" />
     </>
   );
 }
