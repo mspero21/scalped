@@ -220,7 +220,7 @@ export default function OnboardingPage() {
               </div>
 
               {/* Team list */}
-              <div className="max-h-64 overflow-y-auto space-y-1 -mx-2 px-2">
+              <div className="max-h-72 overflow-y-auto space-y-1 -mx-2 px-2">
                 {loadingTeams ? (
                   <div className="flex justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />

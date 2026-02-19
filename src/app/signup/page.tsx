@@ -485,7 +485,7 @@ export default function SignupPage() {
                     />
                   </div>
 
-                  <div className="max-h-48 overflow-y-auto space-y-1">
+                  <div className="max-h-72 overflow-y-auto space-y-1">
                     {filteredTeams.slice(0, 30).map((team) => {
                       const isSelected = selectedTeam?.id === team.id;
                       const teamSpecificColors = isSelected && teamColors ? teamColors : null;

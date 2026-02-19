@@ -7,14 +7,15 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useFavoriteTeam } from "@/hooks/use-favorite-team";
 import { useStadiums } from "@/hooks/use-stadiums";
+import { getTeamTagline } from "@/lib/team-taglines";
 
 function AnimatedCounter({ target, label }: { target: number; label: string }) {
   const [count, setCount] = useState(0);
-  const [hasAnimated, setHasAnimated] = useState(false);
+  const [animatedTarget, setAnimatedTarget] = useState(0);
 
   useEffect(() => {
-    if (hasAnimated || target === 0) return;
-    setHasAnimated(true);
+    if (target === 0 || target === animatedTarget) return;
+    setAnimatedTarget(target);
     const duration = 1500;
     const steps = 40;
     const increment = target / steps;
@@ -29,7 +30,7 @@ function AnimatedCounter({ target, label }: { target: number; label: string }) {
       }
     }, duration / steps);
     return () => clearInterval(timer);
-  }, [target, hasAnimated]);
+  }, [target, animatedTarget]);
 
   return (
     <div className="text-center">
@@ -81,12 +82,19 @@ export default function Home() {
   const showTeam = !!user && !!favoriteTeam;
   const accentColor = (showTeam ? teamColors?.primary : null) || '#ea580c';
 
+  // Team-specific tagline (stable per page load, changes on refresh)
+  const teamTagline = useMemo(
+    () => favoriteTeam ? getTeamTagline(favoriteTeam) : null,
+    [favoriteTeam]
+  );
+
   const stadiumCounts = useMemo(() => {
-    const counts = { nfl: 0, nba: 0, mlb: 0, college: 0 };
+    const counts = { nfl: 0, nba: 0, mlb: 0, nhl: 0, college: 0 };
     stadiums.forEach((s) => {
       if (s.sport === 'NFL') counts.nfl++;
       else if (s.sport === 'NBA') counts.nba++;
       else if (s.sport === 'MLB') counts.mlb++;
+      else if (s.sport === 'NHL') counts.nhl++;
       else if (s.sport === 'NCAA_FOOTBALL' || s.sport === 'NCAA_BASKETBALL') counts.college++;
     });
     return counts;
@@ -124,7 +132,7 @@ export default function Home() {
               }}
             >
               <Flame className="h-3.5 w-3.5" />
-              {showTeam ? `${favoriteTeam} Fan` : 'For Stadium Lovers'}
+              {showTeam ? teamTagline : 'For Stadium Lovers'}
             </div>
           </div>
 
@@ -241,11 +249,12 @@ export default function Home() {
 
         {/* Stats */}
         <section className="py-8">
-          <div className="grid grid-cols-4 gap-2 p-4 rounded-2xl bg-[var(--card-bg-secondary)]/80 border border-[var(--card-bg)]">
-            <AnimatedCounter target={stadiumCounts.nfl || 32} label="NFL" />
-            <AnimatedCounter target={stadiumCounts.nba || 30} label="NBA" />
-            <AnimatedCounter target={stadiumCounts.mlb || 30} label="MLB" />
-            <AnimatedCounter target={stadiumCounts.college || 150} label="College" />
+          <div className="grid grid-cols-5 gap-2 p-4 rounded-2xl bg-[var(--card-bg-secondary)]/80 border border-[var(--card-bg)]">
+            <AnimatedCounter target={stadiumCounts.nfl} label="NFL" />
+            <AnimatedCounter target={stadiumCounts.nba} label="NBA" />
+            <AnimatedCounter target={stadiumCounts.mlb} label="MLB" />
+            <AnimatedCounter target={stadiumCounts.nhl} label="NHL" />
+            <AnimatedCounter target={stadiumCounts.college} label="College" />
           </div>
         </section>
 

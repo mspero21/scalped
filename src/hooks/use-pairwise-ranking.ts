@@ -6,6 +6,21 @@ import { StadiumRatingWithStadium, StadiumRating, Stadium } from '@/types/databa
 import { InitialTier, TIER_STARTING_ELO, calculateNewRatings } from '@/lib/ranking/elo';
 import { rankingLogger } from '@/lib/logger';
 
+/**
+ * Find sibling stadium rows that share the same physical venue (same name + city).
+ * e.g. United Center has rows for Bulls (NBA) and Blackhawks (NHL).
+ */
+async function getSiblingStadiumIds(stadium: Stadium): Promise<Stadium[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from('stadiums')
+    .select('*')
+    .eq('name', stadium.name)
+    .eq('city', stadium.city)
+    .neq('id', stadium.id);
+  return (data as unknown as Stadium[]) || [];
+}
+
 export interface ComparisonState {
   newStadium: Stadium;           // The stadium being added
   compareAgainst: Stadium;       // The existing stadium to compare against
@@ -119,7 +134,30 @@ export function usePairwiseRanking(userId?: string) {
         stadium,
       };
 
-      setRatings((prev) => [...prev, newRating]);
+      // Sync siblings (same venue, different team/sport)
+      const siblings = await getSiblingStadiumIds(stadium);
+      const siblingRatings: StadiumRatingWithStadium[] = [];
+      for (const sibling of siblings) {
+        const siblingInsert = {
+          user_id: userId,
+          stadium_id: sibling.id,
+          sport: sibling.sport,
+          initial_tier: initialTier,
+          comparisons_count: 0,
+          elo_rating: startingElo,
+          global_elo_rating: startingElo,
+        };
+        const { data: sibData } = await supabase
+          .from('stadium_ratings')
+          .upsert(siblingInsert as never, { onConflict: 'user_id,stadium_id' })
+          .select()
+          .single();
+        if (sibData) {
+          siblingRatings.push({ ...(sibData as StadiumRating), stadium: sibling });
+        }
+      }
+
+      setRatings((prev) => [...prev, newRating, ...siblingRatings]);
 
       // Check if comparisons are needed (need at least 1 other stadium)
       const needsComparisons = ratings.length > 0;
@@ -284,6 +322,36 @@ export function usePairwiseRanking(userId?: string) {
           .eq('id', loserRating.id);
       }
 
+      // Sync sibling stadiums (same venue, different team/sport)
+      if (hasEloRating) {
+        const { winnerNewRating: wElo, loserNewRating: lElo } = calculateNewRatings(
+          winnerRating.elo_rating || 1500,
+          loserRating.elo_rating || 1500
+        );
+        const winnerStadium = winnerRating.stadium;
+        const loserStadium = loserRating.stadium;
+        if (winnerStadium) {
+          const winSiblings = await getSiblingStadiumIds(winnerStadium);
+          for (const sib of winSiblings) {
+            await supabase
+              .from('stadium_ratings')
+              .update({ elo_rating: wElo, global_elo_rating: wElo, updated_at: new Date().toISOString() } as never)
+              .eq('user_id', userId)
+              .eq('stadium_id', sib.id);
+          }
+        }
+        if (loserStadium) {
+          const loseSiblings = await getSiblingStadiumIds(loserStadium);
+          for (const sib of loseSiblings) {
+            await supabase
+              .from('stadium_ratings')
+              .update({ elo_rating: lElo, global_elo_rating: lElo, updated_at: new Date().toISOString() } as never)
+              .eq('user_id', userId)
+              .eq('stadium_id', sib.id);
+          }
+        }
+      }
+
       // Refetch ratings to get updated Elo scores
       await fetchRatings();
 
@@ -389,21 +457,27 @@ export function usePairwiseRanking(userId?: string) {
         return { success: false, error: 'Stadium not found in rankings' };
       }
 
-      // Delete all comparisons involving this stadium
-      await supabase
-        .from('comparisons')
-        .delete()
-        .eq('user_id', userId)
-        .or(`winner_stadium_id.eq.${stadiumId},loser_stadium_id.eq.${stadiumId}`);
+      // Find sibling stadiums to also remove
+      const siblings = await getSiblingStadiumIds(ratingToRemove.stadium);
+      const allIds = [stadiumId, ...siblings.map(s => s.id)];
 
-      // Delete the stadium rating
-      const { error: deleteError } = await supabase
-        .from('stadium_ratings')
-        .delete()
-        .eq('user_id', userId)
-        .eq('stadium_id', stadiumId);
+      // Delete all comparisons involving this stadium and siblings
+      for (const id of allIds) {
+        await supabase
+          .from('comparisons')
+          .delete()
+          .eq('user_id', userId)
+          .or(`winner_stadium_id.eq.${id},loser_stadium_id.eq.${id}`);
+      }
 
-      if (deleteError) throw deleteError;
+      // Delete the stadium rating and siblings
+      for (const id of allIds) {
+        await supabase
+          .from('stadium_ratings')
+          .delete()
+          .eq('user_id', userId)
+          .eq('stadium_id', id);
+      }
 
       // With Elo, no need to recompute positions - just refetch
       await fetchRatings();
@@ -448,8 +522,9 @@ export function usePairwiseRanking(userId?: string) {
         }))
       );
 
-      // Update all ratings in the database
+      // Update all ratings in the database and sync siblings
       for (const update of updates) {
+        const rating = reorderedRatings.find(r => r.id === update.id);
         await supabase
           .from('stadium_ratings')
           .update({
@@ -458,6 +533,22 @@ export function usePairwiseRanking(userId?: string) {
             updated_at: new Date().toISOString(),
           } as never)
           .eq('id', update.id);
+
+        // Sync siblings with same Elo
+        if (rating?.stadium) {
+          const siblings = await getSiblingStadiumIds(rating.stadium);
+          for (const sib of siblings) {
+            await supabase
+              .from('stadium_ratings')
+              .update({
+                elo_rating: update.newElo,
+                global_elo_rating: update.newElo,
+                updated_at: new Date().toISOString(),
+              } as never)
+              .eq('user_id', userId)
+              .eq('stadium_id', sib.id);
+          }
+        }
       }
 
       return { success: true };

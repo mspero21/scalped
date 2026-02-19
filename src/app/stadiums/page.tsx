@@ -6,7 +6,6 @@ import { Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { PageContainer } from '@/components/layout/page-container';
 import { StadiumCard } from '@/components/stadiums/stadium-card';
 import { SportFilter, SportFilterValue } from '@/components/stadiums/sport-filter';
-import { LeagueFilter } from '@/components/stadiums/league-filter';
 import { Sport, Stadium } from '@/types/database';
 import { useStadiums } from '@/hooks/use-stadiums';
 import { useAuth } from '@/hooks/use-auth';
@@ -101,7 +100,6 @@ export default function StadiumsPage() {
     ? (sportParam as SportFilterValue)
     : 'SUGGESTED';
 
-  const [selectedLeague, setSelectedLeague] = useState<string | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAllSports, setShowAllSports] = useState(false);
 
@@ -118,20 +116,7 @@ export default function StadiumsPage() {
   // Use centralized ranking service for consistent sorting and lookup
   const visitedStadiums = useMemo(() => buildRankingLookup(ratings), [ratings]);
 
-  // Get unique leagues from current stadiums
-  const availableLeagues = useMemo(() => {
-    const leagueSet = new Set<string>();
-    stadiums.forEach((stadium) => {
-      if (stadium.league) {
-        leagueSet.add(stadium.league);
-      }
-    });
-    return Array.from(leagueSet).sort();
-  }, [stadiums]);
-
-  // Reset league filter when sport changes and update URL
   const handleSportChange = (sport: SportFilterValue) => {
-    setSelectedLeague('ALL');
     if (sport === 'SUGGESTED') {
       router.push('/stadiums', { scroll: false }); // SUGGESTED is the default
     } else if (sport === 'ALL') {
@@ -149,11 +134,6 @@ export default function StadiumsPage() {
 
   const filteredStadiums = useMemo(() => {
     let filtered = selectedSport === 'SUGGESTED' ? suggestedStadiums : stadiums;
-
-    // Filter by league if selected
-    if (selectedLeague !== 'ALL') {
-      filtered = filtered.filter((stadium) => stadium.league === selectedLeague);
-    }
 
     // Filter and sort by search query — stadium name matches first
     if (searchQuery.trim()) {
@@ -176,7 +156,7 @@ export default function StadiumsPage() {
     }
 
     return filtered;
-  }, [stadiums, suggestedStadiums, selectedSport, selectedLeague, searchQuery]);
+  }, [stadiums, suggestedStadiums, selectedSport, searchQuery]);
 
   return (
     <PageContainer>
@@ -213,15 +193,6 @@ export default function StadiumsPage() {
               {showAllSports ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </button>
           </div>
-
-          {/* League Filter - shows when there are multiple leagues */}
-          {availableLeagues.length > 1 && (
-            <LeagueFilter
-              leagues={availableLeagues}
-              selected={selectedLeague}
-              onChange={setSelectedLeague}
-            />
-          )}
         </div>
       </div>
 

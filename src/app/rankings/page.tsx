@@ -99,6 +99,11 @@ export default function RankingsPage() {
   // Get unique sports that user has rated
   const availableSports = [...new Set(ratings.map((r) => r.sport))];
 
+  // Deduplicate shared venues for the count (e.g. United Center = 1, not 2)
+  const uniqueVenueCount = new Set(
+    ratings.map((r) => `${r.stadium?.name}||${r.stadium?.city}`)
+  ).size;
+
   return (
     <PageContainer>
       {/* Header */}
@@ -109,7 +114,7 @@ export default function RankingsPage() {
             My Rankings
           </h1>
           <p className="text-[var(--foreground-muted)] mt-1 text-sm">
-            {ratings.length} stadium{ratings.length !== 1 ? 's' : ''} ranked
+            {uniqueVenueCount} stadium{uniqueVenueCount !== 1 ? 's' : ''} ranked
           </p>
         </div>
         {ratings.length > 0 && (

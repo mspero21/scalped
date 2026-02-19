@@ -45,6 +45,19 @@ const TIER_ORDER: Record<string, number> = {
 };
 
 export function EloRankingList({ ratings, selectedSport = 'ALL', onRemove, onReorder }: EloRankingListProps) {
+  // Deduplicate shared venues (e.g. United Center has Bulls NBA + Blackhawks NHL rows).
+  // For sport-specific tabs, keep only that sport's entry.
+  // For ALL, keep one entry per physical venue (first seen = highest Elo since list is pre-sorted).
+  function deduplicateVenues(items: StadiumRatingWithStadium[]): StadiumRatingWithStadium[] {
+    const seen = new Set<string>();
+    return items.filter((r) => {
+      const key = `${r.stadium.name}||${r.stadium.city}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
   // Sort ALL ratings to get overall ranking (for score calculation)
   const allSorted = [...ratings].sort((a, b) => {
     const tierDiff = (TIER_ORDER[b.initial_tier] || 0) - (TIER_ORDER[a.initial_tier] || 0);
@@ -52,23 +65,28 @@ export function EloRankingList({ ratings, selectedSport = 'ALL', onRemove, onReo
     return (b.global_elo_rating || 0) - (a.global_elo_rating || 0);
   });
 
+  // Deduplicate for display and ranking
+  const dedupedAll = deduplicateVenues(allSorted);
+
   // Create lookup for overall rank (1-based)
   const overallRankMap: Record<string, number> = {};
-  allSorted.forEach((r, idx) => {
+  dedupedAll.forEach((r, idx) => {
     overallRankMap[r.stadium_id] = idx + 1;
   });
-  const overallTotal = ratings.length;
+  const overallTotal = dedupedAll.length;
 
   // Filter/sort for display
   const initialFilteredRatings = selectedSport === 'ALL'
-    ? allSorted
-    : ratings
-        .filter((r) => r.sport === selectedSport)
-        .sort((a, b) => {
-          const tierDiff = (TIER_ORDER[b.initial_tier] || 0) - (TIER_ORDER[a.initial_tier] || 0);
-          if (tierDiff !== 0) return tierDiff;
-          return (b.elo_rating || 0) - (a.elo_rating || 0);
-        });
+    ? dedupedAll
+    : deduplicateVenues(
+        ratings
+          .filter((r) => r.sport === selectedSport)
+          .sort((a, b) => {
+            const tierDiff = (TIER_ORDER[b.initial_tier] || 0) - (TIER_ORDER[a.initial_tier] || 0);
+            if (tierDiff !== 0) return tierDiff;
+            return (b.elo_rating || 0) - (a.elo_rating || 0);
+          })
+      );
 
   // Local state for drag and drop reordering
   const [filteredRatings, setFilteredRatings] = useState(initialFilteredRatings);
