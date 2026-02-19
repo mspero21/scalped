@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { createClient } from '@/lib/supabase/client';
 import { Search, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { useLocalTeamTheme } from '@/hooks/use-team-theme';
+import { useFavoriteTeam } from '@/hooks/use-favorite-team';
 import { signupUser } from '@/app/actions/signup';
 
 interface TeamOption {
@@ -20,6 +21,7 @@ export default function SignupPage() {
   const router = useRouter();
   const { signInWithGoogle } = useAuth();
   const { teamColors, setTeamTheme } = useLocalTeamTheme();
+  const { setFavoriteTeam } = useFavoriteTeam();
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -123,9 +125,13 @@ export default function SignupPage() {
 
     if (signInError) {
       // Account was created but auto-sign-in failed - show success and redirect to login
+      if (selectedTeam) setFavoriteTeam(selectedTeam.name);
       setSuccess(true);
       return;
     }
+
+    // Save favorite team to localStorage
+    if (selectedTeam) setFavoriteTeam(selectedTeam.name);
 
     router.push('/rankings');
   }

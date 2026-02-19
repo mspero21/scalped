@@ -155,7 +155,7 @@ export default function StadiumsPage() {
       filtered = filtered.filter((stadium) => stadium.league === selectedLeague);
     }
 
-    // Filter by search query
+    // Filter and sort by search query — stadium name matches first
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -165,10 +165,18 @@ export default function StadiumsPage() {
           stadium.city.toLowerCase().includes(query) ||
           stadium.state.toLowerCase().includes(query)
       );
+      filtered = [...filtered].sort((a, b) => {
+        const aName = a.name.toLowerCase().includes(query) ? 0 : 1;
+        const bName = b.name.toLowerCase().includes(query) ? 0 : 1;
+        if (aName !== bName) return aName - bName;
+        const aTeam = a.team_name.toLowerCase().includes(query) ? 0 : 1;
+        const bTeam = b.team_name.toLowerCase().includes(query) ? 0 : 1;
+        return aTeam - bTeam;
+      });
     }
 
     return filtered;
-  }, [stadiums, selectedLeague, searchQuery]);
+  }, [stadiums, suggestedStadiums, selectedSport, selectedLeague, searchQuery]);
 
   return (
     <PageContainer>
