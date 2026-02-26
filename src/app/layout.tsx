@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
+import { TaglineBanner } from "@/components/layout/tagline-banner";
 import { Toaster } from "react-hot-toast";
 import { FavoriteTeamProvider } from "@/hooks/use-favorite-team";
 import { ThemeProvider } from "@/hooks/use-team-theme";
@@ -87,6 +88,9 @@ export default function RootLayout({
             }}
           />
           <Navbar />
+          {/* Desktop spacer: clears the 64px fixed top navbar */}
+          <div className="hidden md:block h-16" />
+          <TaglineBanner />
           {children}
         </ThemeProvider>
         </FavoriteTeamProvider>

@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('ActivityFeed');
 
 export type ActivityType = 'visit' | 'ranking' | 'review' | 'bucket_list';
 
@@ -66,13 +69,13 @@ export function useActivityFeed(userId: string | undefined, mode: 'all' | 'follo
         user_id: string;
         stadium_id: string;
         initial_tier: 'LOVED' | 'LIKED' | 'OKAY' | 'DISLIKED';
-        elo_rating: number;
+        rank_position: number;
         created_at: string;
         updated_at: string;
       }
       let ratingsQuery = supabase
         .from('stadium_ratings')
-        .select('id, user_id, stadium_id, initial_tier, elo_rating, created_at, updated_at')
+        .select('id, user_id, stadium_id, initial_tier, rank_position, created_at, updated_at')
         .order('updated_at', { ascending: false })
         .limit(30);
 
@@ -83,7 +86,7 @@ export function useActivityFeed(userId: string | undefined, mode: 'all' | 'follo
       const { data: ratingsData, error: rankingsError } = await ratingsQuery.returns<RatingRow[]>();
 
       if (rankingsError) {
-        console.error('Rankings query error:', rankingsError);
+        logger.error('Rankings query error', rankingsError);
         throw rankingsError;
       }
 
@@ -128,8 +131,8 @@ export function useActivityFeed(userId: string | undefined, mode: 'all' | 'follo
       })) || [];
 
       // Skip visits and reviews for now
-      const visits: any[] = [];
-      const reviews: any[] = [];
+      const visits: never[] = [];
+      const reviews: never[] = [];
 
       // Combine and sort all activities
       const allActivities: ActivityItem[] = [
@@ -149,7 +152,7 @@ export function useActivityFeed(userId: string | undefined, mode: 'all' | 'follo
           user_id: r.user_id,
           stadium_id: r.stadium_id,
           created_at: r.updated_at || r.created_at,
-          data: { tier: r.initial_tier, elo_score: r.elo_rating },
+          data: { tier: r.initial_tier, rank_position: r.rank_position },
           profile: Array.isArray(r.profiles) ? r.profiles[0] : r.profiles,
           stadium: Array.isArray(r.stadiums) ? r.stadiums[0] : r.stadiums
         })),
@@ -181,7 +184,7 @@ export function useActivityFeed(userId: string | undefined, mode: 'all' | 'follo
         errorMessage = err.message;
       }
 
-      console.error('Error fetching activity feed:', errorMessage, 'Full error:', JSON.stringify(err, null, 2));
+      logger.error('Error fetching activity feed', err, { errorMessage });
       setError(errorMessage);
     } finally {
       setLoading(false);

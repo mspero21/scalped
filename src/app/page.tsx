@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useFavoriteTeam } from "@/hooks/use-favorite-team";
 import { useStadiums } from "@/hooks/use-stadiums";
-import { getTeamTagline } from "@/lib/team-taglines";
 
 function AnimatedCounter({ target, label }: { target: number; label: string }) {
   const [count, setCount] = useState(0);
@@ -82,12 +81,6 @@ export default function Home() {
   const showTeam = !!user && !!favoriteTeam;
   const accentColor = (showTeam ? teamColors?.primary : null) || '#ea580c';
 
-  // Team-specific tagline (stable per page load, changes on refresh)
-  const teamTagline = useMemo(
-    () => favoriteTeam ? getTeamTagline(favoriteTeam) : null,
-    [favoriteTeam]
-  );
-
   const stadiumCounts = useMemo(() => {
     const counts = { nfl: 0, nba: 0, mlb: 0, nhl: 0, college: 0 };
     stadiums.forEach((s) => {
@@ -118,23 +111,25 @@ export default function Home() {
         }}
       />
 
-      <div className="max-w-2xl mx-auto px-4 pt-20">
+      <div className="max-w-2xl mx-auto px-4 pt-20 md:pt-28">
         {/* Hero Section */}
-        <section className="py-10 md:py-16">
-          {/* Badge */}
-          <div className="flex justify-center mb-6">
-            <div
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider border"
-              style={{
-                borderColor: `${accentColor}40`,
-                color: accentColor,
-                backgroundColor: `${accentColor}10`,
-              }}
-            >
-              <Flame className="h-3.5 w-3.5" />
-              {showTeam ? teamTagline : 'For Stadium Lovers'}
+        <section className="py-6 md:py-10">
+          {/* "For Stadium Lovers" badge — only shown when no team is set (logged-out / no favorite team) */}
+          {!showTeam && (
+            <div className="flex justify-center mb-6">
+              <div
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider border"
+                style={{
+                  borderColor: `${accentColor}40`,
+                  color: accentColor,
+                  backgroundColor: `${accentColor}10`,
+                }}
+              >
+                <Flame className="h-3.5 w-3.5" />
+                For Stadium Lovers
+              </div>
             </div>
-          </div>
+          )}
 
           {/* App Name */}
           <h1

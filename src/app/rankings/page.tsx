@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { Trophy, Trash2 } from 'lucide-react';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('Rankings');
 import { PageContainer } from '@/components/layout/page-container';
 import { EloRankingList } from '@/components/ranking/elo-ranking-list';
 import { Button } from '@/components/ui/button';
@@ -51,7 +54,7 @@ export default function RankingsPage() {
   async function handleReorder(reorderedRatings: typeof ratings) {
     const result = await reorderRankings(reorderedRatings);
     if (result.error) {
-      console.error('Failed to reorder rankings:', result.error);
+      logger.error('Failed to reorder rankings', result.error);
     }
   }
 

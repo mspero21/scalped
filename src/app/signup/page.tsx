@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('Signup');
 import { useAuth } from '@/hooks/use-auth';
 import { createClient } from '@/lib/supabase/client';
 import { Search, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
@@ -35,25 +38,23 @@ export default function SignupPage() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Fetch teams from stadiums (distinct team_name + sport)
+  // Fetch teams from teams table
   useEffect(() => {
     async function fetchTeams() {
       const supabase = createClient();
       const { data } = await supabase
-        .from('stadiums')
-        .select('id, team_name, sport')
-        .order('team_name');
+        .from('teams')
+        .select('id, name, sport')
+        .order('name');
 
       if (data) {
         const seen = new Set<string>();
-        const teamList: TeamOption[] = [];
-        for (const s of data) {
-          if (s.team_name && !seen.has(s.team_name)) {
-            seen.add(s.team_name);
-            teamList.push({ id: s.id, name: s.team_name, sport: s.sport });
-          }
-        }
-        setTeams(teamList);
+        const deduped = data.filter(t => {
+          if (seen.has(t.name)) return false;
+          seen.add(t.name);
+          return true;
+        });
+        setTeams(deduped.map(t => ({ id: t.id, name: t.name, sport: t.sport })));
       }
     }
     fetchTeams();
@@ -76,6 +77,10 @@ export default function SignupPage() {
     }
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
+      return;
+    }
+    if (password.length > 72) {
+      setError('Password must be 72 characters or fewer');
       return;
     }
     if (password !== confirmPassword) {
@@ -102,38 +107,44 @@ export default function SignupPage() {
     setError('');
     setLoading(true);
 
-    // Use server action to create user (auto-confirmed, no email needed)
-    const result = await signupUser({
-      email,
-      password,
-      username: username.trim(),
-      displayName: displayName.trim(),
-    });
+    try {
+      // Use server action to create user (auto-confirmed, no email needed)
+      const result = await signupUser({
+        email,
+        password,
+        username: username.trim(),
+        displayName: displayName.trim(),
+      });
 
-    if (result.error) {
-      setError(result.error);
-      setLoading(false);
-      return;
-    }
+      if (result.error) {
+        setError(result.error);
+        setLoading(false);
+        return;
+      }
 
-    // Account created and auto-confirmed - sign them in directly
-    const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+      // Account created and auto-confirmed - sign them in directly
+      const supabase = createClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (signInError) {
-      // Account was created but auto-sign-in failed - show success and redirect to login
+      if (signInError) {
+        // Account was created but auto-sign-in failed - show success and redirect to login
+        if (selectedTeam) setFavoriteTeam(selectedTeam.name);
+        setSuccess(true);
+        return;
+      }
+
+      // Save favorite team to localStorage
       if (selectedTeam) setFavoriteTeam(selectedTeam.name);
-      setSuccess(true);
-      return;
+
+      router.push('/rankings');
+    } catch (err) {
+      logger.error('Signup error', err);
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setLoading(false);
     }
-
-    // Save favorite team to localStorage
-    if (selectedTeam) setFavoriteTeam(selectedTeam.name);
-
-    router.push('/rankings');
   }
 
   async function handleGoogleSignIn() {
@@ -362,6 +373,7 @@ export default function SignupPage() {
                           type="password"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
+                          maxLength={72}
                           className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all text-sm"
                           placeholder="••••••••"
                         />
@@ -374,6 +386,7 @@ export default function SignupPage() {
                           type="password"
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
+                          maxLength={72}
                           className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all text-sm"
                           placeholder="••••••••"
                         />

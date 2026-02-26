@@ -5,6 +5,9 @@ import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { Profile } from '@/types/database';
 import { FAVORITE_TEAM_CHANGED_EVENT } from '@/hooks/use-favorite-team';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('Auth');
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -51,7 +54,7 @@ export function useAuth() {
 
     if (error && error.code !== 'PGRST116') {
       // PGRST116 = no rows returned, which is fine for new users
-      console.error('Error fetching profile:', error);
+      logger.error('Error fetching profile', error);
     }
 
     setProfile((data as Profile | null) || null);

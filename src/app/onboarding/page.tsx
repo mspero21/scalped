@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, ChevronRight, Search } from 'lucide-react';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('Onboarding');
 import { PageContainer } from '@/components/layout/page-container';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,30 +32,27 @@ export default function OnboardingPage() {
   const [error, setError] = useState<string | null>(null);
   const [loadingTeams, setLoadingTeams] = useState(true);
 
-  // Fetch distinct team names from stadiums
+  // Fetch teams from teams table
   useEffect(() => {
     async function fetchTeams() {
       try {
         const supabase = createClient();
         const { data, error } = await supabase
-          .from('stadiums')
-          .select('team_name, sport')
-          .order('team_name');
+          .from('teams')
+          .select('name, sport')
+          .order('name');
 
         if (error) throw error;
 
-        // Deduplicate by team_name
         const seen = new Set<string>();
-        const teamList: TeamOption[] = [];
-        for (const row of data as unknown as { team_name: string; sport: string }[]) {
-          if (!seen.has(row.team_name)) {
-            seen.add(row.team_name);
-            teamList.push({ name: row.team_name, sport: row.sport });
-          }
-        }
-        setTeams(teamList);
+        const deduped = (data || []).filter(t => {
+          if (seen.has(t.name)) return false;
+          seen.add(t.name);
+          return true;
+        });
+        setTeams(deduped.map(t => ({ name: t.name, sport: t.sport })));
       } catch (err) {
-        console.error('Error fetching teams:', err);
+        logger.error('Error fetching teams', err);
       } finally {
         setLoadingTeams(false);
       }
@@ -137,7 +137,7 @@ export default function OnboardingPage() {
       await refreshProfile();
       router.push('/');
     } catch (err) {
-      console.error('Error saving profile:', err);
+      logger.error('Error saving profile', err);
       setError(err instanceof Error ? err.message : 'Failed to save');
       setSaving(false);
     }

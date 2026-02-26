@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Save, Loader2, LogOut, Trash2, AlertTriangle, Camera, User, Heart, Search } from 'lucide-react';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('Settings');
 import { PageContainer } from '@/components/layout/page-container';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,26 +46,23 @@ export default function SettingsPage() {
     setSelectedTeamName(savedTeamName);
   }, [savedTeamName]);
 
-  // Fetch distinct team names from stadiums
+  // Fetch teams from teams table
   useEffect(() => {
     async function fetchTeams() {
       const supabase = createClient();
       const { data } = await supabase
-        .from('stadiums')
-        .select('team_name, sport')
-        .order('team_name');
+        .from('teams')
+        .select('name, sport')
+        .order('name');
 
       if (data) {
-        // Deduplicate by team_name
         const seen = new Set<string>();
-        const teamList: TeamOption[] = [];
-        for (const row of data as unknown as { team_name: string; sport: string }[]) {
-          if (!seen.has(row.team_name)) {
-            seen.add(row.team_name);
-            teamList.push({ name: row.team_name, sport: row.sport });
-          }
-        }
-        setTeams(teamList);
+        const deduped = data.filter(t => {
+          if (seen.has(t.name)) return false;
+          seen.add(t.name);
+          return true;
+        });
+        setTeams(deduped.map(t => ({ name: t.name, sport: t.sport })));
       }
     }
     fetchTeams();
@@ -102,9 +102,10 @@ export default function SettingsPage() {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
-    // Validate file
-    if (!file.type.startsWith('image/')) {
-      setError('Please select an image file');
+    // Validate file type (whitelist safe image MIME types)
+    const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setError('Please select a JPG, PNG, or WebP image');
       return;
     }
 
@@ -131,7 +132,7 @@ export default function SettingsPage() {
 
       if (uploadError) {
         // If bucket doesn't exist, we'll just skip avatar upload
-        console.error('Upload error:', uploadError);
+        logger.error('Upload error', uploadError);
         setError('Avatar upload not available. Please save other changes.');
         setUploadingAvatar(false);
         return;
@@ -144,7 +145,7 @@ export default function SettingsPage() {
 
       setAvatarUrl(publicUrl);
     } catch (err) {
-      console.error('Avatar upload error:', err);
+      logger.error('Avatar upload error', err);
       setError('Failed to upload avatar');
     } finally {
       setUploadingAvatar(false);
@@ -183,14 +184,14 @@ export default function SettingsPage() {
         .select();
 
       if (upsertError) {
-        console.error('Upsert error:', upsertError);
+        logger.error('Upsert error', upsertError);
         if (upsertError.code === '23505') {
           throw new Error('Username is already taken');
         }
         throw upsertError;
       }
 
-      console.log('Profile saved:', data);
+      logger.info('Profile saved', { data });
 
       // Refresh the profile in auth context
       await refreshProfile();
@@ -198,7 +199,7 @@ export default function SettingsPage() {
       // Redirect to profile page
       router.push('/profile');
     } catch (err) {
-      console.error('Save error:', err);
+      logger.error('Save error', err);
       setError(err instanceof Error ? err.message : 'Failed to save');
       setSaving(false);
     }
@@ -495,7 +496,7 @@ export default function SettingsPage() {
                       await signOut();
                       router.push('/');
                     } catch (err) {
-                      console.error('Error deleting account:', err);
+                      logger.error('Error deleting account', err);
                       setError('Failed to delete account');
                       setShowDeleteConfirm(false);
                     }

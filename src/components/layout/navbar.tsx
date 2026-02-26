@@ -23,10 +23,10 @@ export function Navbar() {
   return (
     <>
       {/* Desktop Top Nav */}
-      <nav className="hidden md:block fixed top-0 left-0 right-0 z-50 bg-[var(--nav-bg)] backdrop-blur-md border-b border-[var(--nav-border)]">
+      <nav role="navigation" aria-label="Main navigation" className="hidden md:block fixed top-0 left-0 right-0 z-50 bg-[var(--nav-bg)] backdrop-blur-md border-b border-[var(--nav-border)]">
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center gap-2.5">
+            <Link href="/" className="flex items-center gap-2.5" aria-label="Scalped home">
               <span className="text-2xl">🎟️</span>
               <span className="text-xl font-extrabold text-[var(--foreground)] tracking-tight">Scalped</span>
             </Link>
@@ -40,6 +40,7 @@ export function Navbar() {
                   <Link
                     key={item.href}
                     href={item.href}
+                    aria-label={item.label}
                     className={cn(
                       'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200',
                       isActive
@@ -58,7 +59,7 @@ export function Navbar() {
       </nav>
 
       {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50">
+      <nav role="navigation" aria-label="Main navigation" className="md:hidden fixed bottom-0 left-0 right-0 z-50">
         <div className="bg-[var(--nav-bg)] backdrop-blur-xl border-t border-[var(--nav-border)]">
           <div className="flex items-end justify-around px-2 pt-2 pb-2">
             {navItems.map((item) => {
@@ -69,6 +70,7 @@ export function Navbar() {
                 <Link
                   key={item.href}
                   href={item.href}
+                  aria-label={item.label}
                   className={cn(
                     'flex flex-col items-center gap-0.5 px-3 pt-2 pb-2 rounded-xl text-[10px] font-medium transition-all duration-200 relative min-w-[56px]',
                     isActive

@@ -113,14 +113,14 @@ FROM stadium_id_mapping m
 WHERE c.loser_stadium_id = m.old_id AND m.old_id != m.new_id;
 
 -- ============================================
--- 7. Remove duplicate stadium_ratings (keep highest elo)
+-- 7. Remove duplicate stadium_ratings (keep best ranked)
 -- ============================================
 DELETE FROM stadium_ratings sr1
 USING stadium_ratings sr2
-WHERE sr1.user_id = sr2.user_id 
+WHERE sr1.user_id = sr2.user_id
   AND sr1.stadium_id = sr2.stadium_id
   AND sr1.id != sr2.id
-  AND sr1.elo_rating < sr2.elo_rating;
+  AND sr1.rank_position > sr2.rank_position;
 
 -- ============================================
 -- 8. Delete duplicate stadiums (keep the normalized ones)

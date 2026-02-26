@@ -37,6 +37,25 @@ interface StadiumPoint {
   };
 }
 
+interface StadiumData {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+  sport: Sport;
+  isVisited: boolean;
+}
+
+interface StadiumHtmlElement extends HTMLDivElement {
+  stadiumData?: StadiumData;
+}
+
+interface HtmlElementDatum {
+  lat: number;
+  lng: number;
+  element: HTMLDivElement;
+}
+
 interface StadiumGlobeProps {
   selectedSport?: Sport | 'ALL';
 }
@@ -48,7 +67,7 @@ export function StadiumGlobe({ selectedSport = 'ALL' }: StadiumGlobeProps) {
   const { visitsByStadium } = useVisits(user?.id);
   const globeEl = useRef<any>(null);
   const [globeReady, setGlobeReady] = useState(false);
-  const [hoveredStadium, setHoveredStadium] = useState<any>(null);
+  const [hoveredStadium, setHoveredStadium] = useState<StadiumData | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -69,7 +88,7 @@ export function StadiumGlobe({ selectedSport = 'ALL' }: StadiumGlobeProps) {
       const sportEmoji = getSportEmoji(stadium.sport);
 
       const el = document.createElement('div');
-      el.innerHTML = sportEmoji;
+      el.textContent = sportEmoji;
       el.style.fontSize = '20px';
       el.style.cursor = 'pointer';
       el.style.filter = isVisited ? 'none' : 'grayscale(100%) brightness(1.2)';
@@ -85,7 +104,7 @@ export function StadiumGlobe({ selectedSport = 'ALL' }: StadiumGlobeProps) {
         sport: stadium.sport,
         isVisited,
       };
-      (el as any).stadiumData = stadiumData;
+      (el as StadiumHtmlElement).stadiumData = stadiumData;
 
       el.addEventListener('mouseenter', () => {
         el.style.transform = 'scale(1.3)';
@@ -123,17 +142,17 @@ export function StadiumGlobe({ selectedSport = 'ALL' }: StadiumGlobeProps) {
   }, []);
 
   // Handle HTML element click
-  const handleElementClick = (el: any) => {
+  const handleElementClick = (el: StadiumHtmlElement | null) => {
     if (el && el.stadiumData) {
       router.push(`/stadium/${el.stadiumData.id}`);
     }
   };
 
   // Track the last hovered element to reset it
-  const lastHoveredRef = useRef<any>(null);
+  const lastHoveredRef = useRef<StadiumHtmlElement | null>(null);
 
   // Handle HTML element hover
-  const handleElementHover = (el: any) => {
+  const handleElementHover = (el: StadiumHtmlElement | null) => {
     // Reset previous element if exists
     if (lastHoveredRef.current && lastHoveredRef.current.stadiumData) {
       const prevData = lastHoveredRef.current.stadiumData;
@@ -194,7 +213,7 @@ export function StadiumGlobe({ selectedSport = 'ALL' }: StadiumGlobeProps) {
         backgroundColor="rgba(0,0,0,0)"
         htmlElementsData={htmlElements}
         htmlAltitude={0.01}
-        htmlElement={(d: any) => d.element}
+        htmlElement={(d: unknown) => (d as HtmlElementDatum).element}
         htmlTransitionDuration={0}
         onHtmlElementClick={handleElementClick}
         onHtmlElementHover={handleElementHover}

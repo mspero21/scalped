@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('FoodRecommendations');
 
 interface FoodRecommendationRow {
   id: string;
@@ -113,7 +116,7 @@ export function useFoodRecommendations(stadiumId: string | undefined, userId?: s
         // Table doesn't exist yet - fail silently
         setRecommendations([]);
       } else {
-        console.error('Error fetching food recommendations:', errorObj?.message || err);
+        logger.error('Error fetching food recommendations', err);
         setError(errorObj?.message || 'Failed to load');
       }
     } finally {
@@ -144,7 +147,7 @@ export function useFoodRecommendations(stadiumId: string | undefined, userId?: s
     if (insertError) {
       const errorMsg = insertError.message || 'Failed to add recommendation';
       if (insertError.code !== '42P01') {
-        console.error('Error adding food recommendation:', errorMsg);
+        logger.error('Error adding food recommendation', insertError);
       }
       return { error: errorMsg };
     }

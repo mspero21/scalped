@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { UserPlus, UserMinus, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFollows } from '@/hooks/use-follows';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('FollowButton');
 
 interface FollowButtonProps {
   targetUserId: string;
@@ -34,12 +37,12 @@ export function FollowButton({
     if (following) {
       const result = await unfollowUser(targetUserId);
       if (result.error) {
-        console.error('Failed to unfollow:', result.error);
+        logger.error('Failed to unfollow', result.error);
       }
     } else {
       const result = await followUser(targetUserId);
       if (result.error) {
-        console.error('Failed to follow:', result.error);
+        logger.error('Failed to follow', result.error);
       }
     }
 

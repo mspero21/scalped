@@ -10,9 +10,10 @@ interface PageContainerProps {
 export function PageContainer({ children, className, noPadding }: PageContainerProps) {
   return (
     <main
+      role="main"
       className={cn(
         'min-h-screen',
-        'pb-20 md:pb-0 md:pt-20', // Account for navbar
+        'pb-20 md:pb-0', // pb-20 for mobile bottom nav; desktop top handled by layout spacer
         !noPadding && 'px-4 py-6',
         className
       )}

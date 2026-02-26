@@ -1,6 +1,9 @@
 'use server';
 
 import { createClient } from '@supabase/supabase-js';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('Signup');
 
 interface SignupInput {
   email: string;
@@ -46,6 +49,7 @@ export async function signupUser(input: SignupInput): Promise<SignupResult> {
     });
 
     if (authError) {
+      logger.error('Auth error during signup', authError);
       return { error: authError.message };
     }
 
@@ -59,20 +63,19 @@ export async function signupUser(input: SignupInput): Promise<SignupResult> {
         user_id: authData.user.id,
         username: input.username.trim(),
         display_name: input.displayName.trim(),
-        email: input.email,
       },
       { onConflict: 'user_id' }
     );
 
     if (profileError) {
-      console.error('Error creating profile:', profileError);
+      logger.error('Error creating profile', profileError);
       // User was created but profile failed - still return success
       // Profile can be created later during login
     }
 
     return { success: true };
   } catch (err) {
-    console.error('Signup error:', err);
+    logger.error('Signup error', err);
     return { error: err instanceof Error ? err.message : 'Failed to create account' };
   }
 }

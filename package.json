@@ -9,7 +9,10 @@
     "lint": "eslint",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -31,6 +34,7 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
     "@supabase/supabase-js": "^2.90.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",

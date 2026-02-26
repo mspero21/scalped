@@ -2,6 +2,9 @@
 
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('ErrorPage');
 import { PageContainer } from '@/components/layout/page-container';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import Link from 'next/link';
@@ -14,7 +17,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('Page error:', error);
+    logger.error('Page error', error);
   }, [error]);
 
   return (

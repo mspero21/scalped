@@ -83,6 +83,11 @@ class Logger {
 // Export singleton instance
 export const logger = new Logger();
 
+// Convenience factory for scoped loggers
+export function createLogger(moduleName: string) {
+  return logger.scope(moduleName);
+}
+
 // Export scoped loggers for common areas
 export const rankingLogger = logger.scope('Ranking');
 export const authLogger = logger.scope('Auth');

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /profile/
+Disallow: /onboarding/
+Disallow: /settings/
+
+Sitemap: https://scalped.app/sitemap.xml

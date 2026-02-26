@@ -29,7 +29,7 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 function findReferenceLocation(allStadiums: Stadium[], favoriteTeamName: string): { lat: number; lng: number } | null {
   // 1. Try the team's own stadium
   const homeStadiums = allStadiums.filter(
-    s => s.team_name.toLowerCase() === favoriteTeamName.toLowerCase()
+    s => s.team_name?.toLowerCase() === favoriteTeamName.toLowerCase()
   );
   for (const s of homeStadiums) {
     if (s.latitude && s.longitude) return { lat: s.latitude, lng: s.longitude };
@@ -67,10 +67,10 @@ function getSuggestedStadiums(allStadiums: Stadium[], favoriteTeamName: string |
 
   // Favorite team's own stadiums always come first
   const teamStadiums = allStadiums.filter(
-    s => s.team_name.toLowerCase() === favoriteTeamName.toLowerCase()
+    s => s.team_name?.toLowerCase() === favoriteTeamName.toLowerCase()
   );
   const otherStadiums = allStadiums.filter(
-    s => s.team_name.toLowerCase() !== favoriteTeamName.toLowerCase()
+    s => s.team_name?.toLowerCase() !== favoriteTeamName.toLowerCase()
   );
 
   const ref = findReferenceLocation(allStadiums, favoriteTeamName);
@@ -141,16 +141,16 @@ export default function StadiumsPage() {
       filtered = filtered.filter(
         (stadium) =>
           stadium.name.toLowerCase().includes(query) ||
-          stadium.team_name.toLowerCase().includes(query) ||
-          stadium.city.toLowerCase().includes(query) ||
-          stadium.state.toLowerCase().includes(query)
+          stadium.team_name?.toLowerCase().includes(query) ||
+          stadium.city?.toLowerCase().includes(query) ||
+          stadium.state?.toLowerCase().includes(query)
       );
       filtered = [...filtered].sort((a, b) => {
         const aName = a.name.toLowerCase().includes(query) ? 0 : 1;
         const bName = b.name.toLowerCase().includes(query) ? 0 : 1;
         if (aName !== bName) return aName - bName;
-        const aTeam = a.team_name.toLowerCase().includes(query) ? 0 : 1;
-        const bTeam = b.team_name.toLowerCase().includes(query) ? 0 : 1;
+        const aTeam = a.team_name?.toLowerCase().includes(query) ? 0 : 1;
+        const bTeam = b.team_name?.toLowerCase().includes(query) ? 0 : 1;
         return aTeam - bTeam;
       });
     }

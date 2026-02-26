@@ -2,6 +2,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { createClient as createServerClient } from '@/lib/supabase/server';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('DeleteAccount');
 
 export async function deleteAccount(): Promise<{ error?: string }> {
   try {
@@ -10,7 +13,7 @@ export async function deleteAccount(): Promise<{ error?: string }> {
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !serviceRoleKey) {
-      console.error('Missing env vars:', { supabaseUrl: !!supabaseUrl, serviceRoleKey: !!serviceRoleKey });
+      logger.error('Missing env vars', undefined, { supabaseUrl: !!supabaseUrl, serviceRoleKey: !!serviceRoleKey });
       return { error: 'Server configuration error' };
     }
 
@@ -22,12 +25,12 @@ export async function deleteAccount(): Promise<{ error?: string }> {
       return { error: 'Not authenticated' };
     }
 
-    console.log('Deleting account for user:', user.id);
+    logger.info('Deleting account for user', { userId: user.id });
 
     // Delete profile first (this will cascade to related data)
     const { error: profileError } = await supabase.from('profiles').delete().eq('user_id', user.id);
     if (profileError) {
-      console.error('Error deleting profile:', profileError);
+      logger.error('Error deleting profile', profileError);
     }
 
     // Use admin client to delete the auth user
@@ -38,14 +41,14 @@ export async function deleteAccount(): Promise<{ error?: string }> {
     const { error } = await adminClient.auth.admin.deleteUser(user.id);
 
     if (error) {
-      console.error('Error deleting auth user:', error);
+      logger.error('Error deleting auth user', error);
       return { error: error.message };
     }
 
-    console.log('Successfully deleted user:', user.id);
+    logger.info('Successfully deleted user', { userId: user.id });
     return {};
   } catch (err) {
-    console.error('Delete account error:', err);
+    logger.error('Delete account error', err);
     return { error: err instanceof Error ? err.message : 'Failed to delete account' };
   }
 }

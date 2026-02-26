@@ -36,10 +36,13 @@ export function SportFilter({ selected, onChange, expanded = false }: SportFilte
   };
 
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+    <div role="tablist" aria-label="Filter by sport" className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
       {sportsToShow.map((sport) => (
         <button
           key={sport}
+          role="tab"
+          aria-selected={selected === sport}
+          aria-label={`Filter by ${getLabel(sport)}`}
           onClick={() => onChange(sport)}
           className={cn(
             'flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all',
@@ -74,10 +77,13 @@ export function SportFilterExpanded({ selected, onChange }: SportFilterProps) {
 
   return (
     <div className="space-y-3">
-      <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+      <div role="tablist" aria-label="Filter by sport" className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
         {allSports.map((sport) => (
           <button
             key={sport}
+            role="tab"
+            aria-selected={selected === sport}
+            aria-label={`Filter by ${getLabel(sport)}`}
             onClick={() => onChange(sport)}
             className={cn(
               'flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all',

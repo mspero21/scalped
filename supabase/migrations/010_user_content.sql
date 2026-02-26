@@ -1,5 +1,5 @@
--- User-generated content: Food recommendations, Tips, and Reviews
--- Migration 009
+-- User-generated content: Food recommendations, Tips, Reviews, and Follows
+-- Migration 010
 
 -- Food Recommendations table
 CREATE TABLE IF NOT EXISTS food_recommendations (
@@ -118,7 +118,9 @@ CREATE POLICY "Users can insert own upvotes" ON content_upvotes
 CREATE POLICY "Users can delete own upvotes" ON content_upvotes
   FOR DELETE USING (auth.uid() = user_id);
 
--- Follows policies
+-- Follows policies (drop old broad policies from 001_base_schema, replace with granular ones)
+DROP POLICY IF EXISTS "Follows are viewable by everyone" ON follows;
+DROP POLICY IF EXISTS "Users can manage own follows" ON follows;
 CREATE POLICY "Anyone can view follows" ON follows
   FOR SELECT USING (true);
 CREATE POLICY "Users can follow others" ON follows

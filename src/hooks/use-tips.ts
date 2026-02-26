@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('Tips');
 
 interface TipRow {
   id: string;
@@ -111,7 +114,7 @@ export function useTips(stadiumId: string | undefined, userId?: string) {
         // Table doesn't exist yet - fail silently
         setTips([]);
       } else {
-        console.error('Error fetching tips:', errorObj?.message || err);
+        logger.error('Error fetching tips', err);
         setError(errorObj?.message || 'Failed to load');
       }
     } finally {
@@ -141,7 +144,7 @@ export function useTips(stadiumId: string | undefined, userId?: string) {
     if (insertError) {
       const errorMsg = insertError.message || 'Failed to add tip';
       if (insertError.code !== '42P01') {
-        console.error('Error adding tip:', errorMsg);
+        logger.error('Error adding tip', insertError);
       }
       return { error: errorMsg };
     }

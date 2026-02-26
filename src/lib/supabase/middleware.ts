@@ -11,11 +11,12 @@ export async function updateSession(request: NextRequest) {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   // Check for undefined, null, empty string, or placeholder values
+  // Accept both https:// (production) and http://127.0.0.1 (local dev)
   const hasValidConfig = supabaseUrl &&
                          supabaseAnonKey &&
                          supabaseUrl.trim() !== '' &&
                          supabaseAnonKey.trim() !== '' &&
-                         supabaseUrl.startsWith('https://');
+                         (supabaseUrl.startsWith('https://') || supabaseUrl.startsWith('http://127.0.0.1'));
 
   if (!hasValidConfig) {
     // Allow app to run without Supabase for demo purposes

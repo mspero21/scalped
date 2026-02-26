@@ -21,7 +21,7 @@ export function Avatar({ src, name, size = 'md', className }: AvatarProps) {
       <div className={cn('relative rounded-full overflow-hidden', sizeClasses[size], className)}>
         <Image
           src={src}
-          alt={name}
+          alt={`${name} avatar`}
           fill
           className="object-cover"
         />

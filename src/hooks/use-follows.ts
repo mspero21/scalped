@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Profile } from '@/types/database';
 import toast from 'react-hot-toast';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('Follows');
 
 export interface FollowWithProfile {
   id: string;
@@ -54,7 +57,7 @@ export function useFollows(userId: string | undefined) {
       setFollowers((followersData || []) as unknown as FollowWithProfile[]);
       setFollowing((followingData || []) as unknown as FollowWithProfile[]);
     } catch (err) {
-      console.error('Error fetching follows:', err);
+      logger.error('Error fetching follows', err);
       setError(err instanceof Error ? err.message : 'Failed to load');
     } finally {
       setLoading(false);

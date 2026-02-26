@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('StadiumReviews');
 
 interface ReviewRow {
   id: string;
@@ -104,7 +107,7 @@ export function useStadiumReviews(stadiumId: string | undefined, userId?: string
         setReviews([]);
         setUserReview(null);
       } else {
-        console.error('Error fetching reviews:', errorObj?.message || err);
+        logger.error('Error fetching reviews', err);
         setError(errorObj?.message || 'Failed to load');
       }
     } finally {
@@ -147,7 +150,7 @@ export function useStadiumReviews(stadiumId: string | undefined, userId?: string
     if (upsertError) {
       const errorMsg = upsertError.message || 'Failed to save review';
       if (upsertError.code !== '42P01') {
-        console.error('Error saving review:', errorMsg);
+        logger.error('Error saving review', upsertError);
       }
       return { error: errorMsg };
     }

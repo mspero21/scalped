@@ -38,11 +38,11 @@ export function StadiumCard({
 
   if (variant === 'compact') {
     return (
-      <Link href={`/stadium/${stadium.id}`}>
+      <Link href={`/stadium/${stadium.id}`} aria-label={`View ${stadium.name} stadium`}>
         <Card className="flex items-center gap-4 p-4 hover:bg-[var(--card-hover)] transition-colors">
           <div className="relative h-16 w-16 rounded-xl overflow-hidden bg-[var(--card-border)] flex-shrink-0">
             {stadium.image_url ? (
-              <Image src={stadium.image_url} alt={stadium.name} fill className="object-cover" />
+              <Image src={stadium.image_url} alt={`${stadium.name} stadium`} fill className="object-cover" />
             ) : (
               <div className="flex items-center justify-center h-full text-2xl">
                 {getSportEmoji(stadium.sport)}
@@ -66,11 +66,11 @@ export function StadiumCard({
 
   if (variant === 'list') {
     return (
-      <Link href={`/stadium/${stadium.id}`}>
+      <Link href={`/stadium/${stadium.id}`} aria-label={`View ${stadium.name} stadium`}>
         <div className="flex items-center gap-4 py-3 hover:bg-[var(--card-hover)] transition-colors rounded-xl px-2 -mx-2">
           <div className="relative h-12 w-12 rounded-lg overflow-hidden bg-[var(--card-border)] flex-shrink-0">
             {stadium.image_url ? (
-              <Image src={stadium.image_url} alt={stadium.name} fill className="object-cover" />
+              <Image src={stadium.image_url} alt={`${stadium.name} stadium`} fill className="object-cover" />
             ) : (
               <div className="flex items-center justify-center h-full text-xl">
                 {getSportEmoji(stadium.sport)}
@@ -93,7 +93,7 @@ export function StadiumCard({
   }
 
   return (
-    <Link href={`/stadium/${stadium.id}`} className="block group touch-feedback">
+    <Link href={`/stadium/${stadium.id}`} className="block group touch-feedback" aria-label={`View ${stadium.name} stadium`}>
       <div className="relative flex min-h-[180px] sm:min-h-0">
         {/* Main ticket section */}
         <div className="flex-1 bg-gradient-to-br from-[var(--card-bg)] to-[var(--card-bg-secondary)] rounded-l-xl overflow-hidden border border-[var(--card-border)] border-r-0 relative">
@@ -111,7 +111,7 @@ export function StadiumCard({
               {stadium.image_url ? (
                 <Image
                   src={stadium.image_url}
-                  alt={stadium.name}
+                  alt={`${stadium.name} stadium`}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
                 />
