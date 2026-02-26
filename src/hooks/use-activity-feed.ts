@@ -130,44 +130,19 @@ export function useActivityFeed(userId: string | undefined, mode: 'all' | 'follo
         stadiums: stadiumsData?.find(s => s.id === r.stadium_id)
       })) || [];
 
-      // Skip visits and reviews for now
-      const visits: never[] = [];
-      const reviews: never[] = [];
-
-      // Combine and sort all activities
-      const allActivities: ActivityItem[] = [
-        ...(visits || []).map(v => ({
-          id: `visit-${v.id}`,
-          type: 'visit' as ActivityType,
-          user_id: v.user_id,
-          stadium_id: v.stadium_id,
-          created_at: v.created_at,
-          data: { visited_at: v.visited_at, event_name: v.event_name },
-          profile: v.profile,
-          stadium: v.stadium
-        })),
-        ...(rankings || []).map(r => ({
-          id: `ranking-${r.id}`,
-          type: 'ranking' as ActivityType,
-          user_id: r.user_id,
-          stadium_id: r.stadium_id,
-          created_at: r.updated_at || r.created_at,
-          data: { tier: r.initial_tier, rank_position: r.rank_position },
-          profile: Array.isArray(r.profiles) ? r.profiles[0] : r.profiles,
-          stadium: Array.isArray(r.stadiums) ? r.stadiums[0] : r.stadiums
-        })),
-        ...(reviews || []).map(r => ({
-          id: `review-${r.id}`,
-          type: 'review' as ActivityType,
-          user_id: r.user_id,
-          stadium_id: r.stadium_id,
-          created_at: r.created_at,
-          data: { content: r.content, rating: r.overall_rating },
-          profile: r.profile,
-          stadium: r.stadium
-        }))
-      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-       .slice(0, 50);
+      // TODO: add visits and reviews activity items when those features are enabled
+      const allActivities: ActivityItem[] = rankings.map(r => ({
+        id: `ranking-${r.id}`,
+        type: 'ranking' as ActivityType,
+        user_id: r.user_id,
+        stadium_id: r.stadium_id,
+        created_at: r.updated_at || r.created_at,
+        data: { tier: r.initial_tier, rank_position: r.rank_position },
+        profile: Array.isArray(r.profiles) ? r.profiles[0] : r.profiles,
+        stadium: Array.isArray(r.stadiums) ? r.stadiums[0] : r.stadiums
+      }))
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 50);
 
       setActivities(allActivities);
     } catch (err) {

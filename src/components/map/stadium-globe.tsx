@@ -102,7 +102,7 @@ export function StadiumGlobe({ selectedSport = 'ALL' }: StadiumGlobeProps) {
         city: stadium.city,
         state: stadium.state,
         sport: stadium.sport,
-        isVisited,
+        isVisited: !!isVisited,
       };
       (el as StadiumHtmlElement).stadiumData = stadiumData;
 
